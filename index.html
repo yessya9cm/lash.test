@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BLUSH & LASH — Онлайн-запись</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Three.js r128 for Surreal 3D Pastel Landscape (Dunes, Rose Quartz, Glowing Orbs & Liquid Chrome) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Manrope with Crisp Lining & Tabular Numerals -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Manrope"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            espresso: '#231920',
+            deepPlum: '#281722',
+            marshmallow: '#ffd6e8',
+            blushPink: '#f5c6da',
+            dustyLavender: '#b9a6cc',
+            warmPeach: '#fae0d8',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --espresso-capsule: #231920;
+      --deep-plum: #281722;
+      --marshmallow-pink: #ffd6e8;
+      --marshmallow-glow: rgba(255, 214, 232, 0.72);
+      --liquid-light: rgba(255, 242, 248, 0.28);
+      --liquid-smoky: rgba(46, 31, 41, 0.34);
+      --specular-border: rgba(255, 255, 255, 0.52);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: #d6bed0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-variant-numeric: lining-nums tabular-nums;
+      font-feature-settings: "lnum" 1, "tnum" 1;
+      color: #231920;
+      background-color: #d6bed0;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .num-tabular {
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-variant-numeric: lining-nums tabular-nums !important;
+      font-feature-settings: "lnum" 1, "tnum" 1 !important;
+    }
+
+    #liquid-pastel-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .viewport-veil {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at 50% 42%,
+        rgba(255, 244, 249, 0.04) 0%,
+        rgba(46, 31, 41, 0.14) 100%
+      );
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      margin: 0 auto;
+    }
+
+    .liquid-glass-light {
+      position: relative;
+      background: linear-gradient(
+        145deg,
+        rgba(255, 246, 251, 0.44) 0%,
+        rgba(255, 236, 245, 0.24) 100%
+      );
+      backdrop-filter: blur(22px) saturate(165%);
+      -webkit-backdrop-filter: blur(22px) saturate(165%);
+      border: 1px solid rgba(255, 255, 255, 0.56);
+      border-radius: 26px;
+      box-shadow:
+        0 18px 42px rgba(46, 26, 39, 0.12),
+        inset 0 1px 1px rgba(255, 255, 255, 0.78),
+        inset 0 -1px 1px rgba(255, 214, 232, 0.35);
+    }
+
+    .liquid-glass-smoky {
+      position: relative;
+      background: linear-gradient(
+        155deg,
+        rgba(56, 37, 49, 0.42) 0%,
+        rgba(38, 25, 34, 0.34) 100%
+      );
+      backdrop-filter: blur(22px) saturate(165%);
+      -webkit-backdrop-filter: blur(22px) saturate(165%);
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      border-radius: 22px;
+      box-shadow:
+        0 14px 34px rgba(35, 20, 30, 0.16),
+        inset 0 1px 1px rgba(255, 255, 255, 0.55),
+        inset 0 -1px 1px rgba(255, 198, 224, 0.22);
+      transition: all 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .liquid-glass-smoky.selected {
+      background: linear-gradient(
+        145deg,
+        rgba(255, 242, 248, 0.62) 0%,
+        rgba(255, 218, 235, 0.46) 100%
+      );
+      border: 1.5px solid rgba(255, 255, 255, 0.88);
+      box-shadow:
+        0 16px 38px rgba(188, 108, 146, 0.24),
+        0 0 24px rgba(255, 214, 232, 0.55),
+        inset 0 1px 2px #ffffff;
+    }
+
+    .espresso-capsule {
+      background-color: #231920;
+      color: #ffffff;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        0 6px 16px rgba(35, 25, 32, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .btn-marshmallow {
+      position: relative;
+      background: linear-gradient(135deg, #ffe5f1 0%, #ffd6e8 52%, #ffc2de 100%);
+      color: #281722;
+      border-radius: 9999px;
+      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow:
+        0 10px 26px rgba(196, 114, 152, 0.32),
+        0 0 22px rgba(255, 214, 232, 0.65),
+        inset 0 1px 1px #ffffff;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, filter 0.2s ease;
+    }
+
+    .btn-marshmallow:hover {
+      filter: brightness(1.02);
+      box-shadow:
+        0 14px 32px rgba(196, 114, 152, 0.4),
+        0 0 28px rgba(255, 214, 232, 0.85),
+        inset 0 1px 1px #ffffff;
+    }
+
+    .btn-marshmallow:active {
+      transform: scale(0.97);
+    }
+
+    .liquid-input {
+      width: 100%;
+      background: rgba(255, 248, 252, 0.68);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 16px;
+      padding: 13px 16px;
+      color: #231920;
+      font-family: 'Manrope', sans-serif;
+      font-variant-numeric: lining-nums tabular-nums;
+      font-size: 14px;
+      font-weight: 600;
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(35, 25, 32, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .liquid-input::placeholder {
+      color: rgba(58, 41, 52, 0.52);
+      font-weight: 500;
+    }
+
+    .liquid-input:focus {
+      background: rgba(255, 252, 254, 0.9);
+      border-color: #ffffff;
+      box-shadow:
+        0 0 0 3px rgba(255, 214, 232, 0.65),
+        0 8px 20px rgba(188, 108, 146, 0.14);
+    }
+
+    .liquid-input.error {
+      border-color: #e11d48;
+      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes blushPulse {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 8px #ff9ec7;
+      }
+      50% {
+        opacity: 0.45;
+        box-shadow: 0 0 2px #ff9ec7;
+      }
+    }
+    .status-pulse {
+      animation: blushPulse 2.2s ease-in-out infinite;
+    }
+
+    .sheet-backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .sheet-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-panel {
+      transform: translateY(100%);
+      transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .sheet-backdrop.open .sheet-panel {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="liquid-pastel-canvas" aria-hidden="true"></canvas>
+  <div class="viewport-veil" aria-hidden="true"></div>
+
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[400px] pointer-events-none flex flex-col items-center gap-2"></div>
+
+  <div class="app-shell px-4 pt-4 pb-36 space-y-6">
+
+    <header class="liquid-glass-light px-3.5 py-2.5 flex items-center justify-between gap-2 rounded-full">
+      <div class="espresso-capsule px-3.5 py-1.5 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-[#ffd6e8]"></span>
+        <span class="text-[11px] font-extrabold tracking-[0.12em] uppercase">BLUSH &amp; LASH</span>
+      </div>
+
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/45 border border-white/60">
+        <span class="w-2 h-2 rounded-full bg-[#ff7eb6] status-pulse"></span>
+        <span class="text-[11px] font-bold text-[#231920]">Запись открыта</span>
+      </div>
+
+      <a href="https://t.me/dsdsyu" target="_blank" rel="noopener noreferrer" id="header-master-link"
+         class="px-3 py-1.5 rounded-full bg-white/40 hover:bg-white/65 border border-white/60 text-[11px] font-bold text-[#231920] transition active:scale-95">
+        @dsdsyu
+      </a>
+    </header>
+
+    <section class="relative pb-4">
+      <div class="liquid-glass-light p-5 pt-5 pb-6 relative overflow-visible">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div class="espresso-capsule px-3.5 py-1.5 inline-flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-[#ffd6e8]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
+            </svg>
+            <span class="text-[11px] font-bold tracking-wider uppercase">Lash &amp; Brow Space</span>
+          </div>
+
+          <span class="num-tabular text-[11px] font-extrabold text-[#231920] bg-white/55 border border-white/75 px-3 py-1 rounded-full">
+            ★ 5.0
+          </span>
+        </div>
+
+        <h1 class="text-[28px] leading-[1.15] font-extrabold tracking-tight text-[#231920] mb-2.5">
+          Нежный взгляд без лишних слов
+        </h1>
+
+        <p class="text-[13px] leading-relaxed text-[#3a2834] font-medium mb-5">
+          Анатомическое моделирование ресниц и архитектура бровей с мгновенной фиксацией окошка прямо в Telegram.
+        </p>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="rounded-2xl bg-white/45 border border-white/70 px-2.5 py-2.5 text-center backdrop-blur-md">
+            <div class="num-tabular text-[12px] font-extrabold text-[#231920]">0 ₽ за сервис</div>
+            <div class="text-[10px] font-semibold text-[#4d3745] mt-0.5">без комиссий</div>
+          </div>
+
+          <div class="rounded-2xl bg-white/45 border border-white/70 px-2.5 py-2.5 text-center backdrop-blur-md">
+            <div class="num-tabular text-[12px] font-extrabold text-[#231920]">Носка 5–6 недель</div>
+            <div class="text-[10px] font-semibold text-[#4d3745] mt-0.5">мягкая сцепка</div>
+          </div>
+
+          <div class="rounded-2xl bg-white/45 border border-white/70 px-2.5 py-2.5 text-center backdrop-blur-md">
+            <div class="num-tabular text-[12px] font-extrabold text-[#231920]">СБП бронь</div>
+            <div class="text-[10px] font-semibold text-[#4d3745] mt-0.5">закрепление окна</div>
+          </div>
+        </div>
+
+        <svg class="absolute -bottom-[17px] left-6 w-[calc(100%-48px)] h-[18px] pointer-events-none drop-shadow-[0_6px_10px_rgba(46,26,39,0.12)]"
+             viewBox="0 0 340 20" fill="none" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0 H340 C320 0 315 11 304 11 C293 11 290 2 276 2 C262 2 258 17 245 17 C232 17 228 3 212 3 C196 3 191 12 179 12 C167 12 162 2 145 2 C128 2 122 18 108 18 C94 18 90 4 74 4 C58 4 52 13 40 13 C28 13 22 0 0 0 Z"
+                fill="rgba(255, 240, 247, 0.56)" />
+          <path d="M0 0.5 C22 0.5 28 13 40 13 C52 13 58 4 74 4 C90 4 94 18 108 18 C122 18 128 2 145 2 C162 2 167 12 179 12 C191 12 196 3 212 3 C228 3 232 17 245 17 C258 17 262 2 276 2 C290 2 293 11 304 11 C315 11 320 0.5 340 0.5"
+                stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" />
+        </svg>
+      </div>
+    </section>
+
+    <section id="services-section" class="space-y-3.5">
+      <div class="flex items-center justify-between px-1">
+        <div class="espresso-capsule px-3.5 py-1.5 inline-flex items-center gap-2">
+          <span class="num-tabular text-[11px] font-extrabold text-[#ffd6e8]">01</span>
+          <span class="text-xs font-bold tracking-wide">Выберите процедуру</span>
+        </div>
+        <span class="text-[11px] font-bold text-[#231920] bg-white/45 border border-white/65 px-3 py-1 rounded-full backdrop-blur-md">
+          Прайс студии
+        </span>
+      </div>
+
+      <nav aria-label="Категории услуг" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <button type="button" data-filter="all"
+                class="filter-pill px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all bg-[#231920] text-white border border-white/25 shadow-[0_6px_16px_rgba(35,25,32,0.2)]">
+          Все
+        </button>
+        <button type="button" data-filter="lashes"
+                class="filter-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all bg-white/45 text-[#231920] border border-white/65 backdrop-blur-md hover:bg-white/65">
+          Ресницы
+        </button>
+        <button type="button" data-filter="brows"
+                class="filter-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all bg-white/45 text-[#231920] border border-white/65 backdrop-blur-md hover:bg-white/65">
+          Брови
+        </button>
+        <button type="button" data-filter="combo"
+                class="filter-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all bg-white/45 text-[#231920] border border-white/65 backdrop-blur-md hover:bg-white/65">
+          Комплексы
+        </button>
+      </nav>
+
+      <div id="services-container" class="space-y-2.5"></div>
+    </section>
+
+    <section id="datetime-section" class="space-y-3.5">
+      <div class="flex items-center justify-between px-1">
+        <div class="espresso-capsule px-3.5 py-1.5 inline-flex items-center gap-2">
+          <span class="num-tabular text-[11px] font-extrabold text-[#ffd6e8]">02</span>
+          <span class="text-xs font-bold tracking-wide">Дата и свободное окно</span>
+        </div>
+        <span class="num-tabular text-[11px] font-bold text-[#231920] bg-white/45 border border-white/65 px-3 py-1 rounded-full backdrop-blur-md">
+          10 дней
+        </span>
+      </div>
+
+      <div id="date-pills-strip" class="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1"></div>
+
+      <div class="liquid-glass-light p-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-extrabold text-[#231920]">Доступное время</span>
+          <span id="selected-date-pill" class="espresso-capsule num-tabular px-3 py-1 text-[11px] font-bold">
+            —
+          </span>
+        </div>
+
+        <div id="time-slots-grid" class="grid grid-cols-3 gap-2"></div>
+      </div>
+    </section>
+
+    <section id="client-section" class="space-y-3.5">
+      <div class="flex items-center justify-between px-1">
+        <div class="espresso-capsule px-3.5 py-1.5 inline-flex items-center gap-2">
+          <span class="num-tabular text-[11px] font-extrabold text-[#ffd6e8]">03</span>
+          <span class="text-xs font-bold tracking-wide">Контакты для записи</span>
+        </div>
+      </div>
+
+      <div class="liquid-glass-light p-4 space-y-3.5">
+        <div>
+          <label for="client-name" class="block text-xs font-extrabold text-[#231920] mb-1.5">Ваше имя</label>
+          <input type="text" id="client-name" class="liquid-input" placeholder="Например, Полина" autocomplete="name" />
+        </div>
+
+        <div>
+          <label for="client-username" class="block text-xs font-extrabold text-[#231920] mb-1.5">Telegram @username</label>
+          <input type="text" id="client-username" class="liquid-input" placeholder="@username" autocomplete="username" />
+        </div>
+
+        <div>
+          <label for="client-note" class="block text-xs font-extrabold text-[#231920] mb-1.5">
+            Пожелания <span class="font-medium text-[#4a3442]">(необязательно)</span>
+          </label>
+          <input type="text" id="client-note" class="liquid-input" placeholder="Например, снятие старого покрытия" />
+        </div>
+      </div>
+
+      <div class="liquid-glass-light px-4 py-3 flex items-center justify-between gap-3">
+        <div class="text-[12px] font-semibold text-[#3a2834]">
+          Есть вопрос перед записью?
+        </div>
+        <a href="https://t.me/dsdsyu" target="_blank" rel="noopener noreferrer" id="footer-master-link"
+           class="espresso-capsule px-3.5 py-1.5 text-[11px] font-extrabold text-[#ffd6e8] whitespace-nowrap hover:opacity-90 transition active:scale-95">
+          Написать @dsdsyu →
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-30 px-3.5 pb-4 pt-3 pointer-events-none">
+    <div class="liquid-glass-light pointer-events-auto px-4 py-3 flex items-center justify-between gap-3 border-white/80 shadow-[0_14px_38px_rgba(35,20,30,0.22)]">
+      <div class="min-w-0 flex-1">
+        <div id="sticky-service-title" class="text-[11px] font-bold text-[#3a2834] truncate">
+          Наращивание ресниц · Мокрый эффект / 2D
+        </div>
+        <div class="flex items-center gap-2 mt-0.5">
+          <span id="sticky-total-price" class="num-tabular text-[19px] font-extrabold text-[#231920] leading-none">
+            2 800 ₽
+          </span>
+          <span id="sticky-datetime-badge" class="num-tabular text-[11px] font-bold text-[#231920] bg-white/60 border border-white/80 px-2 py-0.5 rounded-full truncate">
+            Завтра · 13:30
+          </span>
+        </div>
+      </div>
+
+      <div class="relative flex-shrink-0">
+        <button type="button" id="open-booking-sheet-btn"
+                class="btn-marshmallow px-4 py-3.5 text-[13px] tracking-tight whitespace-nowrap flex items-center gap-1.5">
+          <span>Перейти к брони</span>
+          <span aria-hidden="true">→</span>
+        </button>
+
+        <svg class="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-24 h-[8px] pointer-events-none"
+             viewBox="0 0 96 9" fill="none" aria-hidden="true">
+          <path d="M8 0 H88 C76 0 73 6 65 6 C57 6 55 1 46 1 C37 1 34 8 26 8 C18 8 15 0 8 0 Z"
+                fill="#ffcce3" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="sbp-modal-backdrop" class="sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-[#231920]/45 backdrop-blur-md">
+    <div class="sheet-panel w-full max-w-[440px] rounded-t-[30px] px-5 pt-3 pb-7 border-t border-white/75 shadow-[0_-20px_55px_rgba(35,20,30,0.28)] max-h-[92vh] overflow-y-auto"
+         style="background: linear-gradient(165deg, rgba(255, 245, 250, 0.86) 0%, rgba(246, 224, 236, 0.88) 100%); backdrop-filter: blur(28px) saturate(175%); -webkit-backdrop-filter: blur(28px) saturate(175%);">
+      <div class="w-10 h-1 rounded-full bg-[#231920]/25 mx-auto mb-4"></div>
+
+      <div class="flex items-start justify-between gap-2 mb-4">
+        <div>
+          <div class="espresso-capsule px-3 py-1 inline-flex items-center gap-1.5 mb-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#ffd6e8] status-pulse"></span>
+            <span id="freeze-timer-pill" class="num-tabular text-[11px] font-bold">
+              Окошко заморожено на 30:00
+            </span>
+          </div>
+          <h2 class="text-[22px] font-extrabold text-[#231920] leading-tight">
+            Фиксация записи
+          </h2>
+        </div>
+
+        <button type="button" id="close-sbp-modal-btn" aria-label="Закрыть"
+                class="w-9 h-9 rounded-full bg-white/70 border border-white flex items-center justify-center text-[#231920] font-bold shadow-sm hover:bg-white transition">
+          ✕
+        </button>
+      </div>
+
+      <div class="rounded-[22px] bg-white/65 border border-white/85 p-4 mb-3.5 space-y-2.5 shadow-[0_8px_24px_rgba(46,26,39,0.06)]">
+        <div class="flex items-start justify-between gap-3 pb-2.5 border-b border-[#231920]/10">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-[#5c4352]">Выбранная услуга</div>
+            <div id="modal-service-name" class="text-[14px] font-extrabold text-[#231920] mt-0.5">
+              Наращивание ресниц · Мокрый эффект / 2D
+            </div>
+          </div>
+          <span id="modal-service-duration" class="num-tabular text-[11px] font-bold text-[#231920] bg-[#ffd6e8]/65 px-2.5 py-1 rounded-full whitespace-nowrap">
+            2.5 ч
+          </span>
+        </div>
+
+        <div class="space-y-1.5 text-[13px] pb-2.5 border-b border-[#231920]/10">
+          <div class="flex justify-between gap-3">
+            <span class="text-[#5c4352] font-medium">Дата и время</span>
+            <span id="modal-datetime-val" class="num-tabular font-extrabold text-[#231920] text-right">—</span>
+          </div>
+          <div class="flex justify-between gap-3">
+            <span class="text-[#5c4352] font-medium">Клиент</span>
+            <span id="modal-client-val" class="font-bold text-[#231920] text-right">—</span>
+          </div>
+          <div id="modal-note-row" class="hidden flex justify-between gap-3">
+            <span class="text-[#5c4352] font-medium">Пожелания</span>
+            <span id="modal-note-val" class="font-semibold text-[#231920] text-right max-w-[205px] break-words">—</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-0.5">
+          <div>
+            <div class="text-[11px] font-bold text-[#5c4352]">Полная стоимость</div>
+            <div id="modal-full-price" class="num-tabular text-[18px] font-extrabold text-[#231920]">2 800 ₽</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] font-bold text-[#5c4352]">Предоплата сейчас</div>
+            <div class="num-tabular text-[18px] font-extrabold text-[#9e3b68]">500 ₽</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-[22px] bg-white/75 border border-white p-4 mb-5 shadow-[0_10px_28px_rgba(188,108,146,0.12)]">
+        <div class="flex items-center justify-between gap-2 mb-2.5">
+          <span class="espresso-capsule px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+            Перевод по СБП
+          </span>
+          <span class="text-[11px] font-bold text-[#4a3442]">Т-Банк / Сбер</span>
+        </div>
+
+        <p class="text-[12px] text-[#3a2834] leading-snug mb-3 font-medium">
+          Переведите <span class="num-tabular font-extrabold text-[#231920]">500 ₽</span> по номеру телефона и отправьте чек мастеру <a href="https://t.me/dsdsyu" target="_blank" rel="noopener noreferrer" id="modal-master-link" class="font-extrabold text-[#231920] underline decoration-[#9e3b68]">@dsdsyu</a> в Telegram:
+        </p>
+
+        <div class="rounded-2xl bg-[#fff3f8] border border-[#f5c6da] px-3.5 py-2.5 flex items-center justify-between gap-2">
+          <div id="sbp-phone-text" class="num-tabular text-[15px] font-extrabold text-[#231920] truncate">
+            +7 (912) 000-00-00
+          </div>
+
+          <button type="button" id="copy-sbp-btn"
+                  class="px-3.5 py-2 rounded-full bg-[#231920] text-white text-[11px] font-extrabold whitespace-nowrap shadow-sm hover:opacity-90 transition active:scale-95 flex-shrink-0">
+            Скопировать
+          </button>
+        </div>
+      </div>
+
+      <button type="button" id="send-receipt-btn"
+              class="btn-marshmallow w-full py-4 px-5 text-[14px] flex items-center justify-center gap-2">
+        <svg class="w-[18px] h-[18px] text-[#281722]" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        <span>Отправить чек мастеру</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const MASTER_TELEGRAM_USERNAME = 'dsdsyu';
+    const SBP_PHONE_NUMBER = '+7 (912) 000-00-00';
+    const PREPAYMENT_RUB = 500;
+
+    const SERVICES_CATALOG = [
+      {
+        id: 'lash-classic-15d',
+        category: 'lashes',
+        badge: 'Ресницы',
+        name: 'Наращивание ресниц · Классика / 1.5D',
+        duration: '2 ч',
+        price: 2400,
+        desc: 'Мягкая натуральная густота и деликатный завиток без утяжеления'
+      },
+      {
+        id: 'lash-wet-2d',
+        category: 'lashes',
+        badge: 'Ресницы · Хит',
+        name: 'Наращивание ресниц · Мокрый эффект / 2D',
+        duration: '2.5 ч',
+        price: 2800,
+        desc: 'Трендовая текстура с эффектом влажных ресничек или объём 2D'
+      },
+      {
+        id: 'lash-anime-rays',
+        category: 'lashes',
+        badge: 'Ресницы',
+        name: 'Лучи / Аниме-эффект',
+        duration: '2.5 ч',
+        price: 3100,
+        desc: 'Выразительные заострённые лучики для открытого кукольного взгляда'
+      },
+      {
+        id: 'lash-lami-botox',
+        category: 'lashes',
+        badge: 'Ресницы',
+        name: 'Ламинирование ресниц + ботокс',
+        duration: '1 ч',
+        price: 1900,
+        desc: 'Глубокое питание, окрашивание и естественный лифтинг своих ресниц'
+      },
+      {
+        id: 'brow-arch-tint',
+        category: 'brows',
+        badge: 'Брови',
+        name: 'Архитектура и окрашивание бровей',
+        duration: '45 мин',
+        price: 1300,
+        desc: 'Построение формы по чертам лица, коррекция и стойкий оттенок'
+      },
+      {
+        id: 'brow-lami-corr',
+        category: 'brows',
+        badge: 'Брови',
+        name: 'Долговременная укладка бровей + коррекция',
+        duration: '1 ч',
+        price: 1800,
+        desc: 'Послушные воздушные волоски с уходом и деликатной коррекцией'
+      },
+      {
+        id: 'combo-lami-brows',
+        category: 'combo',
+        badge: 'Комплекс',
+        name: 'Комплекс: Лами ресниц + оформление бровей',
+        duration: '1.5 ч',
+        price: 2900,
+        desc: 'Полное обновление взгляда за один комфортный визит'
+      }
+    ];
+
+    const TIME_SLOTS_CONFIG = [
+      { time: '10:30', taken: false },
+      { time: '12:00', taken: true },
+      { time: '13:30', taken: false },
+      { time: '15:00', taken: true },
+      { time: '16:00', taken: false },
+      { time: '19:00', taken: false }
+    ];
+
+    const state = {
+      activeCategory: 'all',
+      selectedServiceId: 'lash-wet-2d',
+      selectedDayIndex: 1,
+      selectedTime: '13:30',
+      clientName: '',
+      clientUsername: '',
+      clientNote: '',
+      timerSeconds: 30 * 60,
+      timerHandle: null
+    };
+
+    function initSurrealPastel3DScene() {
+      const canvas = document.getElementById('liquid-pastel-canvas');
+      if (!canvas || typeof THREE === 'undefined') return;
+
+      try {
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: false,
+          powerPreference: 'high-performance'
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.12;
+
+        const scene = new THREE.Scene();
+
+        function createPastelSkyTexture() {
+          const skyCanvas = document.createElement('canvas');
+          skyCanvas.width = 512;
+          skyCanvas.height = 512;
+          const ctx = skyCanvas.getContext('2d');
+
+          const grad = ctx.createLinearGradient(0, 0, 0, 512);
+          grad.addColorStop(0.0, '#b9a6cc');
+          grad.addColorStop(0.36, '#d9b4ce');
+          grad.addColorStop(0.64, '#f5c6da');
+          grad.addColorStop(0.84, '#fae0d8');
+          grad.addColorStop(1.0, '#dfb8c6');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 512, 512);
+
+          const glow1 = ctx.createRadialGradient(360, 295, 10, 360, 295, 170);
+          glow1.addColorStop(0, 'rgba(255, 240, 246, 0.55)');
+          glow1.addColorStop(1, 'rgba(255, 240, 246, 0)');
+          ctx.fillStyle = glow1;
+          ctx.fillRect(0, 0, 512, 512);
+
+          const glow2 = ctx.createRadialGradient(140, 260, 10, 140, 260, 150);
+          glow2.addColorStop(0, 'rgba(247, 210, 232, 0.45)');
+          glow2.addColorStop(1, 'rgba(247, 210, 232, 0)');
+          ctx.fillStyle = glow2;
+          ctx.fillRect(0, 0, 512, 512);
+
+          const tex = new THREE.CanvasTexture(skyCanvas);
+          tex.mapping = THREE.EquirectangularReflectionMapping;
+          return tex;
+        }
+
+        const pastelEnvTex = createPastelSkyTexture();
+        scene.background = pastelEnvTex;
+        scene.environment = pastelEnvTex;
+        scene.fog = new THREE.FogExp2(0xf2cadb, 0.042);
+
+        const camera = new THREE.PerspectiveCamera(
+          42,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          60
+        );
+        const baseCamPos = new THREE.Vector3(0, 1.55, 7.4);
+        const baseLookTarget = new THREE.Vector3(0, 0.72, 0);
+        camera.position.copy(baseCamPos);
+        camera.lookAt(baseLookTarget);
+
+        function createVelvetSandBump() {
+          const size = 256;
+          const bCanvas = document.createElement('canvas');
+          bCanvas.width = bCanvas.height = size;
+          const ctx = bCanvas.getContext('2d');
+          const img = ctx.createImageData(size, size);
+
+          for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+              const idx = (y * size + x) * 4;
+              const ripple = Math.sin((y / size) * Math.PI * 26 + Math.sin((x / size) * Math.PI * 4) * 1.4) * 0.5 + 0.5;
+              const fine = ((Math.sin(x * 19.31 + y * 57.17) * 43758.5453) % 1 + 1) % 1;
+              const val = Math.floor((ripple * 0.65 + fine * 0.35) * 255);
+              img.data[idx] = img.data[idx + 1] = img.data[idx + 2] = val;
+              img.data[idx + 3] = 255;
+            }
+          }
+          ctx.putImageData(img, 0, 0);
+          const tex = new THREE.CanvasTexture(bCanvas);
+          tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+          tex.repeat.set(6, 6);
+          return tex;
+        }
+
+        const sandBumpTex = createVelvetSandBump();
+
+        function duneElevation(x, z) {
+          const ridge1 = Math.sin(x * 0.55 + 0.6) * Math.cos(z * 0.45) * 0.52;
+          const ridge2 = Math.sin(x * 1.15 - z * 0.7) * 0.22;
+          const sideLift = Math.pow(Math.abs(x) * 0.24, 1.6) * 0.42;
+          const backHills = z < -2.0 ? (-z - 2.0) * 0.26 : 0;
+          return -0.55 + ridge1 + ridge2 + sideLift + backHills;
+        }
+
+        const duneGeo = new THREE.PlaneGeometry(24, 18, 90, 72);
+        duneGeo.rotateX(-Math.PI / 2);
+
+        const posAttr = duneGeo.attributes.position;
+        const colorsArr = new Float32Array(posAttr.count * 3);
+        const dustyRose = new THREE.Color(0xdfb8c6);
+        const creamBlush = new THREE.Color(0xebd3d8);
+        const tmpColor = new THREE.Color();
+
+        for (let i = 0; i < posAttr.count; i++) {
+          const vx = posAttr.getX(i);
+          const vz = posAttr.getZ(i);
+          const vy = duneElevation(vx, vz);
+          posAttr.setY(i, vy);
+
+          const crestMix = Math.min(1, Math.max(0, (vy + 0.85) / 1.45));
+          tmpColor.copy(dustyRose).lerp(creamBlush, crestMix);
+          colorsArr[i * 3] = tmpColor.r;
+          colorsArr[i * 3 + 1] = tmpColor.g;
+          colorsArr[i * 3 + 2] = tmpColor.b;
+        }
+        duneGeo.setAttribute('color', new THREE.BufferAttribute(colorsArr, 3));
+        duneGeo.computeVertexNormals();
+
+        const duneMat = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          bumpMap: sandBumpTex,
+          bumpScale: 0.025,
+          roughness: 0.78,
+          metalness: 0.02
+        });
+
+        const dunesMesh = new THREE.Mesh(duneGeo, duneMat);
+        scene.add(dunesMesh);
+
+        const roseQuartzMat = new THREE.MeshPhysicalMaterial({
+          color: 0xf6a5c4,
+          emissive: 0x9c3d68,
+          emissiveIntensity: 0.2,
+          roughness: 0.16,
+          metalness: 0.04,
+          transparent: true,
+          opacity: 0.84,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.08,
+          envMap: pastelEnvTex,
+          envMapIntensity: 1.15
+        });
+
+        function createHexagonalCrystalShard(radius, shaftHeight, tipHeight) {
+          const shard = new THREE.Group();
+
+          const shaftGeo = new THREE.CylinderGeometry(radius * 0.92, radius * 1.08, shaftHeight, 6);
+          shaftGeo.translate(0, shaftHeight * 0.5, 0);
+          const shaftMesh = new THREE.Mesh(shaftGeo, roseQuartzMat);
+          shard.add(shaftMesh);
+
+          const tipGeo = new THREE.ConeGeometry(radius * 0.92, tipHeight, 6);
+          tipGeo.translate(0, shaftHeight + tipHeight * 0.5, 0);
+          const tipMesh = new THREE.Mesh(tipGeo, roseQuartzMat);
+          shard.add(tipMesh);
+
+          return shard;
+        }
+
+        function spawnQuartzCluster(cx, cz, scale = 1, mirror = 1) {
+          const cluster = new THREE.Group();
+          const baseY = duneElevation(cx, cz) - 0.12;
+          cluster.position.set(cx, baseY, cz);
+
+          const shards = [
+            { r: 0.24, sh: 1.18, th: 0.48, x: 0, z: 0, rx: 0.08, rz: -0.14 * mirror, ry: 0.2 },
+            { r: 0.18, sh: 0.88, th: 0.36, x: 0.24 * mirror, z: 0.14, rx: 0.18, rz: -0.34 * mirror, ry: 0.8 },
+            { r: 0.16, sh: 0.78, th: 0.32, x: -0.22 * mirror, z: 0.18, rx: 0.22, rz: 0.18 * mirror, ry: 1.4 },
+            { r: 0.14, sh: 0.62, th: 0.26, x: 0.12 * mirror, z: -0.22, rx: -0.2, rz: -0.25 * mirror, ry: 2.1 },
+            { r: 0.11, sh: 0.46, th: 0.2, x: -0.14 * mirror, z: -0.16, rx: -0.15, rz: 0.26 * mirror, ry: 0.5 }
+          ];
+
+          shards.forEach(s => {
+            const mesh = createHexagonalCrystalShard(s.r * scale, s.sh * scale, s.th * scale);
+            mesh.position.set(s.x * scale, 0, s.z * scale);
+            mesh.rotation.set(s.rx, s.ry, s.rz);
+            cluster.add(mesh);
+          });
+
+          scene.add(cluster);
+        }
+
+        spawnQuartzCluster(-2.15, 2.35, 1.15, 1);
+        spawnQuartzCluster(2.35, 1.45, 1.05, -1);
+        spawnQuartzCluster(-1.65, -0.8, 0.9, 1);
+
+        const glowingBlushMat = new THREE.MeshStandardMaterial({
+          color: 0xffd1e5,
+          emissive: 0xff8ec2,
+          emissiveIntensity: 0.72,
+          roughness: 0.24,
+          metalness: 0.02
+        });
+
+        const orbConfigs = [
+          { x: 2.05, z: 0.35, r: 1.08, sink: 0.28 },
+          { x: -1.15, z: 2.75, r: 0.32, sink: 0.42 },
+          { x: 0.88, z: 2.95, r: 0.24, sink: 0.45 },
+          { x: -2.45, z: 0.55, r: 0.48, sink: 0.35 },
+          { x: 0.15, z: -1.45, r: 0.62, sink: 0.32 }
+        ];
+
+        orbConfigs.forEach(cfg => {
+          const geo = new THREE.SphereGeometry(cfg.r, 36, 36);
+          const orb = new THREE.Mesh(geo, glowingBlushMat);
+          const groundY = duneElevation(cfg.x, cfg.z);
+          orb.position.set(cfg.x, groundY + cfg.r * (1 - cfg.sink), cfg.z);
+          scene.add(orb);
+        });
+
+        const liquidChromeMat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          metalness: 0.98,
+          roughness: 0.04,
+          envMap: pastelEnvTex,
+          envMapIntensity: 1.45
+        });
+
+        const pearlOrbMat = new THREE.MeshPhysicalMaterial({
+          color: 0xfff5fa,
+          emissive: 0xf2bfd8,
+          emissiveIntensity: 0.18,
+          metalness: 0.08,
+          roughness: 0.14,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.08,
+          envMap: pastelEnvTex,
+          envMapIntensity: 1.1
+        });
+
+        const groundedDrops = [
+          { x: -1.62, z: 3.15, r: 0.34, mat: liquidChromeMat, stretchX: 1.18 },
+          { x: 1.45, z: 2.65, r: 0.26, mat: liquidChromeMat, stretchX: 1.12 },
+          { x: -0.38, z: 3.35, r: 0.16, mat: pearlOrbMat, stretchX: 1.0 },
+          { x: 1.85, z: 3.25, r: 0.18, mat: pearlOrbMat, stretchX: 1.0 }
+        ];
+
+        groundedDrops.forEach(d => {
+          const geo = new THREE.SphereGeometry(d.r, 32, 32);
+          geo.scale(d.stretchX, 0.86, d.stretchX);
+          const mesh = new THREE.Mesh(geo, d.mat);
+          const gy = duneElevation(d.x, d.z);
+          mesh.position.set(d.x, gy + d.r * 0.62, d.z);
+          scene.add(mesh);
+        });
+
+        const floatingConfigs = [
+          { x: -1.45, y: 2.35, z: 1.4, r: 0.24, mat: liquidChromeMat, phase: 0.0, amp: 0.12 },
+          { x: 1.55, y: 2.65, z: 1.1, r: 0.29, mat: liquidChromeMat, phase: 1.6, amp: 0.14 },
+          { x: -0.85, y: 1.65, z: 2.1, r: 0.14, mat: pearlOrbMat, phase: 2.8, amp: 0.09 },
+          { x: 1.12, y: 1.55, z: 2.35, r: 0.16, mat: pearlOrbMat, phase: 4.1, amp: 0.1 },
+          { x: 0.32, y: 2.95, z: 0.6, r: 0.13, mat: liquidChromeMat, phase: 5.2, amp: 0.11 }
+        ];
+
+        const floatingMeshes = floatingConfigs.map(fc => {
+          const mesh = new THREE.Mesh(new THREE.SphereGeometry(fc.r, 32, 32), fc.mat);
+          mesh.position.set(fc.x, fc.y, fc.z);
+          scene.add(mesh);
+          return { mesh, baseY: fc.y, phase: fc.phase, amp: fc.amp };
+        });
+
+        const ambientLight = new THREE.AmbientLight(0xffeaf4, 1.15);
+        scene.add(ambientLight);
+
+        const warmRimLight = new THREE.DirectionalLight(0xfff1e6, 1.45);
+        warmRimLight.position.set(3.5, 4.5, 3.2);
+        scene.add(warmRimLight);
+
+        const lavenderFillLight = new THREE.DirectionalLight(0xd8c4eb, 0.9);
+        lavenderFillLight.position.set(-4.0, 3.2, 2.0);
+        scene.add(lavenderFillLight);
+
+        const rightOrbGlow = new THREE.PointLight(0xff99c8, 2.2, 9);
+        rightOrbGlow.position.set(1.8, 1.35, 1.2);
+        scene.add(rightOrbGlow);
+
+        const leftCrystalGlow = new THREE.PointLight(0xffb5d8, 1.4, 7);
+        leftCrystalGlow.position.set(-1.9, 1.1, 2.6);
+        scene.add(leftCrystalGlow);
+
+        let targetX = 0;
+        let targetY = 0;
+
+        window.addEventListener('mousemove', e => {
+          const nx = (e.clientX / window.innerWidth) * 2 - 1;
+          const ny = (e.clientY / window.innerHeight) * 2 - 1;
+          targetX = nx * 0.28;
+          targetY = -ny * 0.16;
+        }, { passive: true });
+
+        window.addEventListener('touchmove', e => {
+          if (e.touches && e.touches[0]) {
+            const nx = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+            targetX = nx * 0.22;
+          }
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight, false);
+        });
+
+        const startClock = performance.now();
+        function renderLoop(now) {
+          requestAnimationFrame(renderLoop);
+          const t = (now - startClock) * 0.001;
+
+          camera.position.x += (baseCamPos.x + targetX - camera.position.x) * 0.04;
+          camera.position.y += (baseCamPos.y + targetY - camera.position.y) * 0.04;
+          camera.lookAt(baseLookTarget);
+
+          for (const item of floatingMeshes) {
+            item.mesh.position.y = item.baseY + Math.sin(t * 1.1 + item.phase) * item.amp;
+          }
+
+          rightOrbGlow.intensity = 2.1 + Math.sin(t * 1.3) * 0.25;
+
+          renderer.render(scene, camera);
+        }
+
+        requestAnimationFrame(renderLoop);
+      } catch (err) {
+        console.warn('3D scene fallback:', err);
+      }
+    }
+
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
+    function initTelegramWebApp() {
+      if (!tg) return;
+      try {
+        tg.ready();
+        tg.expand();
+        if (tg.setHeaderColor) tg.setHeaderColor('#cbb4d6');
+        if (tg.setBackgroundColor) tg.setBackgroundColor('#f5c6da');
+
+        const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+        if (user) {
+          const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+          if (fullName) {
+            state.clientName = fullName;
+            document.getElementById('client-name').value = fullName;
+          }
+          if (user.username) {
+            state.clientUsername = '@' + user.username;
+            document.getElementById('client-username').value = '@' + user.username;
+          }
+        }
+      } catch (err) {
+        console.warn('Telegram WebApp SDK fallback:', err);
+      }
+    }
+
+    function triggerHaptic(type = 'light') {
+      try {
+        if (tg && tg.HapticFeedback) {
+          if (type === 'success') {
+            tg.HapticFeedback.notificationOccurred('success');
+          } else {
+            tg.HapticFeedback.impactOccurred(type);
+          }
+        }
+      } catch (_) {}
+    }
+
+    function formatRub(val) {
+      return val.toLocaleString('ru-RU') + ' ₽';
+    }
+
+    function showGlassToast(message, isError = false) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `num-tabular px-4 py-2.5 rounded-full text-xs font-extrabold shadow-xl backdrop-blur-xl border transition-all duration-300 -translate-y-2 opacity-0 ${
+        isError
+          ? 'bg-[#2a121b]/95 border-rose-300/60 text-rose-100'
+          : 'bg-[#231920]/95 border-white/40 text-[#ffd6e8]'
+      }`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('-translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('-translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+
+    function getSelectedService() {
+      return SERVICES_CATALOG.find(s => s.id === state.selectedServiceId) || SERVICES_CATALOG[1];
+    }
+
+    function renderServices() {
+      const container = document.getElementById('services-container');
+      const filtered = state.activeCategory === 'all'
+        ? SERVICES_CATALOG
+        : SERVICES_CATALOG.filter(s => s.category === state.activeCategory);
+
+      container.innerHTML = filtered.map(srv => {
+        const isSelected = srv.id === state.selectedServiceId;
+        return `
+          <div role="radio" aria-checked="${isSelected}" tabindex="0" data-id="${srv.id}"
+               class="srv-card liquid-glass-smoky ${isSelected ? 'selected' : ''} p-4 flex items-center justify-between gap-3.5 cursor-pointer select-none">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                  isSelected
+                    ? 'bg-[#231920] text-[#ffd6e8]'
+                    : 'bg-white/25 text-white border border-white/30'
+                }">
+                  ${srv.badge}
+                </span>
+                <span class="num-tabular text-[11px] font-bold ${
+                  isSelected ? 'text-[#3a2834]' : 'text-white/85'
+                }">
+                  ${srv.duration}
+                </span>
+              </div>
+
+              <div class="text-[15px] font-extrabold leading-snug ${
+                isSelected ? 'text-[#231920]' : 'text-white'
+              }">
+                ${srv.name}
+              </div>
+
+              <p class="text-[12px] mt-1 leading-relaxed font-medium ${
+                isSelected ? 'text-[#4a3442]' : 'text-white/80'
+              }">
+                ${srv.desc}
+              </p>
+            </div>
+
+            <div class="flex flex-col items-end gap-2.5 flex-shrink-0">
+              <span class="espresso-capsule num-tabular px-3 py-1.5 text-[13px] font-extrabold whitespace-nowrap">
+                ${formatRub(srv.price)}
+              </span>
+
+              <span class="w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
+                isSelected
+                  ? 'bg-[#ffd6e8] border-white text-[#231920] shadow-[0_0_14px_rgba(255,214,232,0.9)]'
+                  : 'bg-white/15 border-white/40 text-transparent'
+              }">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <path d="M20 6L9 17L4 12" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.srv-card').forEach(card => {
+        card.addEventListener('click', () => {
+          triggerHaptic('light');
+          state.selectedServiceId = card.dataset.id;
+          renderServices();
+          syncStickyBar();
+        });
+      });
+    }
+
+    const tenDaysList = [];
+
+    function initTenDays() {
+      const weekDays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      const today = new Date();
+
+      tenDaysList.length = 0;
+      for (let i = 0; i < 10; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const wd = weekDays[d.getDay()];
+        const num = d.getDate();
+        const mon = months[d.getMonth()];
+        const shortBadge = i === 0 ? `Сегодня, ${num} ${mon}` : i === 1 ? `Завтра, ${num} ${mon}` : `${wd}, ${num} ${mon}`;
+        tenDaysList.push({
+          idx: i,
+          wd: i === 0 ? 'Сег' : wd,
+          num,
+          mon,
+          fullLabel: `${wd}, ${num} ${mon}`,
+          shortBadge
+        });
+      }
+    }
+
+    function renderDateAndSlots() {
+      const stripEl = document.getElementById('date-pills-strip');
+
+      stripEl.innerHTML = tenDaysList.map(day => {
+        const active = day.idx === state.selectedDayIndex;
+        return `
+          <button type="button" data-day="${day.idx}"
+                  class="date-pill num-tabular flex-shrink-0 w-[68px] py-3 px-2 rounded-2xl border text-center transition-all ${
+                    active
+                      ? 'bg-[#231920] text-white border-white/60 shadow-[0_10px_24px_rgba(35,25,32,0.28)]'
+                      : 'bg-white/40 text-[#231920] border-white/70 backdrop-blur-md hover:bg-white/60'
+                  }">
+            <div class="text-[11px] font-bold ${active ? 'text-[#ffd6e8]' : 'text-[#4a3442]'}">
+              ${day.wd}
+            </div>
+            <div class="text-[18px] font-extrabold my-0.5 leading-tight">${day.num}</div>
+            <div class="text-[10px] font-semibold ${active ? 'text-white/80' : 'text-[#5c4352]'}">${day.mon}</div>
+          </button>
+        `;
+      }).join('');
+
+      stripEl.querySelectorAll('.date-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          triggerHaptic('light');
+          state.selectedDayIndex = Number(btn.dataset.day);
+          renderDateAndSlots();
+          syncStickyBar();
+        });
+      });
+
+      const currentDay = tenDaysList[state.selectedDayIndex] || tenDaysList[1];
+      document.getElementById('selected-date-pill').textContent = currentDay.fullLabel;
+
+      const gridEl = document.getElementById('time-slots-grid');
+      gridEl.innerHTML = TIME_SLOTS_CONFIG.map(slot => {
+        if (slot.taken) {
+          return `
+            <div aria-disabled="true"
+                 class="py-2.5 px-2 rounded-2xl bg-[#231920]/15 border border-white/30 text-center select-none opacity-60">
+              <div class="num-tabular text-[13px] font-bold text-[#3a2834] line-through">${slot.time}</div>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[#4a3442] mt-0.5">занято</div>
+            </div>
+          `;
+        }
+
+        const active = slot.time === state.selectedTime;
+        return `
+          <button type="button" data-time="${slot.time}"
+                  class="slot-pill py-2.5 px-2 rounded-2xl border text-center transition-all ${
+                    active
+                      ? 'bg-gradient-to-br from-[#ffe5f1] to-[#ffc2de] text-[#281722] border-white shadow-[0_8px_20px_rgba(196,114,152,0.34)]'
+                      : 'bg-white/55 text-[#231920] border-white/80 hover:bg-white/80'
+                  }">
+            <div class="num-tabular text-[14px] font-extrabold">${slot.time}</div>
+            <div class="text-[10px] font-bold mt-0.5 ${active ? 'text-[#281722]' : 'text-[#5c4352]'}">
+              ${active ? 'выбрано ✓' : 'свободно'}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      gridEl.querySelectorAll('.slot-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          triggerHaptic('light');
+          state.selectedTime = btn.dataset.time;
+          renderDateAndSlots();
+          syncStickyBar();
+        });
+      });
+    }
+
+    function syncStickyBar() {
+      const srv = getSelectedService();
+      const day = tenDaysList[state.selectedDayIndex] || tenDaysList[1];
+
+      document.getElementById('sticky-service-title').textContent = srv.name;
+      document.getElementById('sticky-total-price').textContent = formatRub(srv.price);
+      document.getElementById('sticky-datetime-badge').textContent = `${day.shortBadge} · ${state.selectedTime}`;
+    }
+
+    function startFreezeTimer() {
+      if (state.timerHandle) clearInterval(state.timerHandle);
+      state.timerSeconds = 30 * 60 - 1;
+      updateTimerLabel();
+
+      state.timerHandle = setInterval(() => {
+        if (state.timerSeconds > 0) {
+          state.timerSeconds--;
+          updateTimerLabel();
+        } else {
+          clearInterval(state.timerHandle);
+        }
+      }, 1000);
+    }
+
+    function updateTimerLabel() {
+      const m = Math.floor(state.timerSeconds / 60);
+      const s = state.timerSeconds % 60;
+      const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      document.getElementById('freeze-timer-pill').textContent = `Окошко заморожено на ${formatted}`;
+    }
+
+    function openSbpModal() {
+      const srv = getSelectedService();
+      const day = tenDaysList[state.selectedDayIndex] || tenDaysList[1];
+
+      document.getElementById('modal-service-name').textContent = srv.name;
+      document.getElementById('modal-service-duration').textContent = srv.duration;
+      document.getElementById('modal-datetime-val').textContent = `${day.fullLabel} в ${state.selectedTime}`;
+      document.getElementById('modal-client-val').textContent = `${state.clientName} (${state.clientUsername})`;
+      document.getElementById('modal-full-price').textContent = formatRub(srv.price);
+      document.getElementById('sbp-phone-text').textContent = SBP_PHONE_NUMBER;
+
+      const noteRow = document.getElementById('modal-note-row');
+      if (state.clientNote.trim()) {
+        document.getElementById('modal-note-val').textContent = state.clientNote.trim();
+        noteRow.classList.remove('hidden');
+      } else {
+        noteRow.classList.add('hidden');
+      }
+
+      startFreezeTimer();
+      document.getElementById('sbp-modal-backdrop').classList.add('open');
+    }
+
+    function closeSbpModal() {
+      document.getElementById('sbp-modal-backdrop').classList.remove('open');
+      if (state.timerHandle) clearInterval(state.timerHandle);
+    }
+
+    function buildFormattedTelegramText() {
+      const srv = getSelectedService();
+      const day = tenDaysList[state.selectedDayIndex] || tenDaysList[1];
+
+      const lines = [
+        '🌸 Новая запись в студию BLUSH & LASH',
+        '',
+        `✨ Услуга: ${srv.name} (${srv.duration})`,
+        `📅 Дата и время: ${day.fullLabel} в ${state.selectedTime}`,
+        `👤 Клиент: ${state.clientName} (${state.clientUsername})`
+      ];
+
+      if (state.clientNote.trim()) {
+        lines.push(`💬 Пожелания: ${state.clientNote.trim()}`);
+      }
+
+      lines.push('');
+      lines.push(`💰 Полная стоимость: ${formatRub(srv.price)}`);
+      lines.push(`💳 Предоплата по СБП: ${formatRub(PREPAYMENT_RUB)}`);
+      lines.push('📎 Чек об оплате прикрепляю ниже:');
+
+      return lines.join('\n');
+    }
+
+    function copyToClipboardSafe(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch (_) {
+        ok = false;
+      }
+      document.body.removeChild(area);
+      return ok;
+    }
+
+    window.onload = function () {
+      initTelegramWebApp();
+      initSurrealPastel3DScene();
+      renderServices();
+      initTenDays();
+      renderDateAndSlots();
+      syncStickyBar();
+
+      function openMasterChat(e) {
+        if (e) e.preventDefault();
+        triggerHaptic('light');
+        const cleanMaster = MASTER_TELEGRAM_USERNAME.trim().replace(/^@/, '');
+        const url = `https://t.me/${cleanMaster}`;
+        if (tg && tg.openTelegramLink) {
+          try {
+            tg.openTelegramLink(url);
+            return;
+          } catch (_) {}
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+
+      ['header-master-link', 'modal-master-link', 'footer-master-link'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', openMasterChat);
+      });
+
+      document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          triggerHaptic('light');
+          state.activeCategory = pill.dataset.filter;
+
+          document.querySelectorAll('.filter-pill').forEach(p => {
+            const isActive = p.dataset.filter === state.activeCategory;
+            p.className = isActive
+              ? 'filter-pill px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all bg-[#231920] text-white border border-white/25 shadow-[0_6px_16px_rgba(35,25,32,0.2)]'
+              : 'filter-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all bg-white/45 text-[#231920] border border-white/65 backdrop-blur-md hover:bg-white/65';
+          });
+
+          renderServices();
+        });
+      });
+
+      document.getElementById('open-booking-sheet-btn').addEventListener('click', () => {
+        const nameEl = document.getElementById('client-name');
+        const userEl = document.getElementById('client-username');
+        const noteEl = document.getElementById('client-note');
+
+        state.clientName = nameEl.value.trim();
+        state.clientUsername = userEl.value.trim();
+        state.clientNote = noteEl.value.trim();
+
+        nameEl.classList.remove('error');
+        userEl.classList.remove('error');
+
+        let invalid = false;
+        if (!state.clientName) {
+          nameEl.classList.add('error');
+          invalid = true;
+        }
+        if (!state.clientUsername) {
+          userEl.classList.add('error');
+          invalid = true;
+        }
+
+        if (invalid) {
+          triggerHaptic('medium');
+          showGlassToast('Укажите имя и Telegram @username', true);
+          document.getElementById('client-section').scrollIntoView({ behavior: 'smooth' });
+          if (!state.clientName) nameEl.focus();
+          else userEl.focus();
+          return;
+        }
+
+        if (!state.clientUsername.startsWith('@') && !state.clientUsername.startsWith('+')) {
+          state.clientUsername = '@' + state.clientUsername;
+          userEl.value = state.clientUsername;
+        }
+
+        triggerHaptic('success');
+        openSbpModal();
+      });
+
+      document.getElementById('close-sbp-modal-btn').addEventListener('click', closeSbpModal);
+      document.getElementById('sbp-modal-backdrop').addEventListener('click', e => {
+        if (e.target === document.getElementById('sbp-modal-backdrop')) {
+          closeSbpModal();
+        }
+      });
+
+      document.getElementById('copy-sbp-btn').addEventListener('click', () => {
+        if (copyToClipboardSafe(SBP_PHONE_NUMBER)) {
+          triggerHaptic('success');
+          showGlassToast('Номер скопирован');
+        } else {
+          showGlassToast('Не удалось скопировать номер', true);
+        }
+      });
+
+      document.getElementById('send-receipt-btn').addEventListener('click', () => {
+        triggerHaptic('success');
+        const formattedText = buildFormattedTelegramText();
+        const encoded = encodeURIComponent(formattedText);
+        const cleanMaster = MASTER_TELEGRAM_USERNAME.trim().replace(/^@/, '');
+
+        if (!cleanMaster) {
+          copyToClipboardSafe(formattedText);
+          showGlassToast('Текст заявки скопирован — выберите чат мастера');
+        }
+
+        const url = cleanMaster
+          ? `https://t.me/${cleanMaster}?text=${encoded}`
+          : `https://t.me/share/url?url=%20&text=${encoded}`;
+
+        if (tg && tg.openTelegramLink) {
+          try {
+            tg.openTelegramLink(url);
+            return;
+          } catch (_) {}
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+      });
+    };
+  </script>
+</body>
+</html>
